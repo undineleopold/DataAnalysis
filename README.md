@@ -1,6 +1,6 @@
 # DataAnalysis
 
-The goal of this project is to build a tool for analyzing weather patterns that trigger events such as basement flooding, sump pump activity, roof leaks, etc..
+The goal of this project is to build a tool for spotting weather patterns that trigger events such as basement flooding, sump pump activity, roof leaks, etc..
 
 How to obtain past daily weather logs from the NOAA:
 

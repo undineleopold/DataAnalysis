@@ -15,3 +15,8 @@ Example: Analyzing combinations of Rain and Wind in Watertown, MA, thresholding 
 Markdown version:
 
 [Rain and Wind analysis.md](https://github.com/undineleopold/DataAnalysis/blob/main/RainAndWindMarkdown/Rain%20and%20Wind%20analysis.md)
+
+Demo:
+
+https://github.com/undineleopold/DataAnalysis/assets/79616083/ba19d501-a0b1-4b19-b491-c809cf979c06
+

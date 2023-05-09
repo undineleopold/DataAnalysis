@@ -2,7 +2,7 @@
 
 The goal of this project is to build a tool for spotting weather patterns that trigger events such as basement flooding, sump pump activity, roof leaks, etc..
 
-How to obtain past daily weather logs from the NOAA:
+How to obtain past daily weather logs from the NOAA and format similar to their CDO (climate data online) service:
 
 [NOAA Data Retrieval.ipynb](https://github.com/undineleopold/DataAnalysis/blob/main/NOAA%20Data%20Retrieval.ipynb)
 

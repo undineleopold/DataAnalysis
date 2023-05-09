@@ -6,11 +6,12 @@ import requests
 import os
 import numpy as np
 import pandas as pd
-import getweatherdata
+from weatherdata import get_stations, dly_to_csv
 import matplotlib.pyplot as plt
+from matplotlib.dates import num2date
 from ipywidgets import interact
 import ipywidgets as widgets
-from matplotlib.widgets import Slider, RangeSlider, CheckButtons
+from matplotlib.widgets import RadioButtons, Slider, RangeSlider, CheckButtons
 #the next two are not needed in newer versions of Jupyter, Python
 from IPython.display import display
 %matplotlib inline
@@ -18,15 +19,7 @@ from IPython.display import display
 
 
 ```python
-#cannot use pd.read_csv because the file is not in the correct format
-#use np.genfromtxt instead to read from fixed-width text file
-#fields are unicode strings of prescribed length or double
-
-stations = np.genfromtxt(os.getcwd()+'/stationdata.txt', delimiter=[11,9,10,7,3,31,4,4,6],
-                                         names=['id','latitude','longitude','elevation','state','name',
-                                                'gsn','hcn','wmo'],
-                                         dtype=['U11','d','d','d','U3','U31','U4','U4','U6'],
-                                         autostrip=True)
+stations = get_stations('stationdata.txt')
 ```
 
 
@@ -44,7 +37,7 @@ stations[np.logical_and(np.char.find(stations['name'],'WATERTOWN')==0,stations['
 
 
 
-Both stations in Watertown, MA, are not in any of the quality-controlled large networks, so may only have limited data.
+Neither station in Watertown, MA, has a GSN, HCN, or WMO network ID, so data may be limited. Let's download and reformat the data from both stations.
 
 
 ```python
@@ -55,41 +48,7 @@ with open('WatertownW.dly', 'w') as file:
 
 
 ```python
-getweatherdata.dly_to_csv('WatertownW.dly','WATERTOWNW')
-```
-
-
-```python
-response=requests.get('https://www1.ncdc.noaa.gov/pub/data/ghcn/daily/all/US1MAMD0186.dly')
-with open('WatertownNW.dly', 'w') as file:
-    file.write(response.text)
-```
-
-
-```python
-getweatherdata.dly_to_csv('WatertownNW.dly','WATERTOWNNW')
-```
-
-The following are features of interest for WIND as per the [documentation](https://www1.ncdc.noaa.gov/pub/data/ghcn/daily/readme.txt):
-* AWDR = Average daily wind direction (degrees)
-* AWND = Average daily wind speed (tenths of meters per second)
-* WDF1 = Direction of fastest 1-minute wind (degrees)
-* WDF2 = Direction of fastest 2-minute wind (degrees)
-* WDF5 = Direction of fastest 5-second wind (degrees)
-* WDFG = Direction of peak wind gust (degrees)
-* WDFI = Direction of highest instantaneous wind (degrees)
-* WDFM = Fastest mile wind direction (degrees)
-* WDMV = 24-hour wind movement (km or miles as per user preference, miles on Daily Form pdf file)
-* WSF1 = Fastest 1-minute wind speed (miles per hour or meters per second as per user preference)
-* WSF2 = Fastest 2-minute wind speed (miles per hour or meters per second as per user preference)
-* WSF5 = Fastest 5-second wind speed (miles per hour or meters per second as per user preference)
-* WSFG = Peak guest wind speed (miles per hour or meters per second as per user preference)
-* WSFI = Highest instantaneous wind speed (miles per hour or meters per second as per user preference)
-* WSFM = Fastest mile wind speed (miles per hour or meters per second as per user preference)
-
-
-```python
-Watertown1=pd.read_csv('WATERTOWNW.csv')
+Watertown1=dly_to_csv('WatertownW.dly','WATERTOWNW')
 Watertown1.head()
 ```
 
@@ -133,75 +92,75 @@ Watertown1.head()
       <th>0</th>
       <td>US1MAMD0119</td>
       <td>2018-05-03</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>,,N</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>,,N</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>,,N</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>,,N</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>,,N</td>
     </tr>
     <tr>
       <th>1</th>
       <td>US1MAMD0119</td>
       <td>2018-05-04</td>
-      <td>13.0</td>
+      <td>13</td>
       <td>,,N</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>,,N</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>,,N</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>,,N</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>,,N</td>
     </tr>
     <tr>
       <th>2</th>
       <td>US1MAMD0119</td>
       <td>2018-05-05</td>
-      <td>3.0</td>
+      <td>3</td>
       <td>,,N</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>,,N</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>,,N</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>,,N</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>,,N</td>
     </tr>
     <tr>
       <th>3</th>
       <td>US1MAMD0119</td>
       <td>2018-05-06</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>T,,N</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>,,N</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>,,N</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>,,N</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>,,N</td>
     </tr>
     <tr>
       <th>4</th>
       <td>US1MAMD0119</td>
       <td>2018-05-07</td>
-      <td>71.0</td>
+      <td>71</td>
       <td>,,N</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>,,N</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>,,N</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>,,N</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>,,N</td>
     </tr>
   </tbody>
@@ -212,7 +171,14 @@ Watertown1.head()
 
 
 ```python
-Watertown2=pd.read_csv('WATERTOWNNW.csv')
+response=requests.get('https://www1.ncdc.noaa.gov/pub/data/ghcn/daily/all/US1MAMD0186.dly')
+with open('WatertownNW.dly', 'w') as file:
+    file.write(response.text)
+```
+
+
+```python
+Watertown2=dly_to_csv('WatertownNW.dly','WATERTOWNNW')
 Watertown2.head()
 ```
 
@@ -260,9 +226,9 @@ Watertown2.head()
       <td>NaN</td>
       <td>NaN</td>
       <td>NaN</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>,,N</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>,,N</td>
       <td>NaN</td>
       <td>NaN</td>
@@ -275,9 +241,9 @@ Watertown2.head()
       <td>NaN</td>
       <td>NaN</td>
       <td>NaN</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>,,N</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>,,N</td>
       <td>NaN</td>
       <td>NaN</td>
@@ -290,9 +256,9 @@ Watertown2.head()
       <td>NaN</td>
       <td>NaN</td>
       <td>NaN</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>,,N</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>,,N</td>
       <td>NaN</td>
       <td>NaN</td>
@@ -305,9 +271,9 @@ Watertown2.head()
       <td>NaN</td>
       <td>NaN</td>
       <td>NaN</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>,,N</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>,,N</td>
       <td>NaN</td>
       <td>NaN</td>
@@ -320,9 +286,9 @@ Watertown2.head()
       <td>NaN</td>
       <td>NaN</td>
       <td>NaN</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>,,N</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>,,N</td>
       <td>NaN</td>
       <td>NaN</td>
@@ -332,6 +298,25 @@ Watertown2.head()
 </div>
 
 
+
+Both stations are fairly close together, and the second station has data going further back, so we continue using that one (WATERTOWNW, dataframe Watertown1) exclusively. However, we see no wind data is recorded.
+
+The following are features of interest for WIND as per the [documentation](https://www1.ncdc.noaa.gov/pub/data/ghcn/daily/readme.txt):
+* AWDR = Average daily wind direction (degrees)
+* AWND = Average daily wind speed (tenths of meters per second)
+* WDF1 = Direction of fastest 1-minute wind (degrees)
+* WDF2 = Direction of fastest 2-minute wind (degrees)
+* WDF5 = Direction of fastest 5-second wind (degrees)
+* WDFG = Direction of peak wind gust (degrees)
+* WDFI = Direction of highest instantaneous wind (degrees)
+* WDFM = Fastest mile wind direction (degrees)
+* WDMV = 24-hour wind movement (km or miles as per user preference, miles on Daily Form pdf file)
+* WSF1 = Fastest 1-minute wind speed (miles per hour or meters per second as per user preference)
+* WSF2 = Fastest 2-minute wind speed (miles per hour or meters per second as per user preference)
+* WSF5 = Fastest 5-second wind speed (miles per hour or meters per second as per user preference)
+* WSFG = Peak guest wind speed (miles per hour or meters per second as per user preference)
+* WSFI = Highest instantaneous wind speed (miles per hour or meters per second as per user preference)
+* WSFM = Fastest mile wind speed (miles per hour or meters per second as per user preference)
 
 For wind data, find a nearby station that has more data. We try one that is part of the WMO (world meteorological organization).
 
@@ -378,12 +363,7 @@ stations[np.logical_and(np.char.find(stations['name'],'CAMBRIDGE')==0,stations['
 response=requests.get('https://www1.ncdc.noaa.gov/pub/data/ghcn/daily/all/USW00014739.dly')
 with open('BostonLogan.dly', 'w') as file:
     file.write(response.text)
-getweatherdata.dly_to_csv('BostonLogan.dly','BOSTONLOGAN')
-```
-
-
-```python
-BostonLogan=pd.read_csv('BOSTONLOGAN.csv',low_memory=False) #low_memory=False suppresses a warning about mixed data types in columns 
+BostonLogan=dly_to_csv('BostonLogan.dly','BOSTONLOGAN')
 BostonLogan.head()
 ```
 
@@ -471,7 +451,7 @@ BostonLogan.head()
       <td>...</td>
       <td>NaN</td>
       <td>NaN</td>
-      <td>1.0</td>
+      <td>1</td>
       <td>,,X</td>
       <td>NaN</td>
       <td>NaN</td>
@@ -543,7 +523,7 @@ BostonLogan.head()
       <td>...</td>
       <td>NaN</td>
       <td>NaN</td>
-      <td>1.0</td>
+      <td>1</td>
       <td>,,X</td>
       <td>NaN</td>
       <td>NaN</td>
@@ -561,7 +541,7 @@ BostonLogan.head()
 
 ## Filtering Data
 
-Now, trim down the columns to include only precipitation, temperature, and wind data.
+For this analysis, we mainly focus on precipitation and wind. Trim down the columns a bit.
 
 
 ```python
@@ -713,9 +693,9 @@ cols
 
 
 ```python
-#now restrict the columns to cols+identifiers, and restrict the date range
+#now restrict the columns to cols+identifying columns, and restrict the date range to the last couple years
 BostonLogan=BostonLogan[['STATION','DATE']+cols]
-BostonLogan=BostonLogan[BostonLogan['DATE']>='2022-01-01']
+BostonLogan=BostonLogan[BostonLogan['DATE']>='2020-01-01']
 #keep only columns which have at least one non-null entry
 BostonLogan=BostonLogan[BostonLogan.columns[BostonLogan.notnull().sum()>0]]
 BostonLogan.head(20)
@@ -755,244 +735,244 @@ BostonLogan.head(20)
   </thead>
   <tbody>
     <tr>
-      <th>31412</th>
+      <th>30681</th>
       <td>USW00014739</td>
-      <td>2022-01-01</td>
-      <td>15.0</td>
-      <td>111.0</td>
-      <td>67.0</td>
-      <td>120.0</td>
-      <td>120.0</td>
-      <td>36.0</td>
-      <td>49.0</td>
+      <td>2020-01-01</td>
+      <td>69</td>
+      <td>61</td>
+      <td>22</td>
+      <td>260</td>
+      <td>250</td>
+      <td>130</td>
+      <td>188</td>
     </tr>
     <tr>
-      <th>31413</th>
+      <th>30682</th>
       <td>USW00014739</td>
-      <td>2022-01-02</td>
-      <td>40.0</td>
-      <td>78.0</td>
-      <td>6.0</td>
-      <td>310.0</td>
-      <td>320.0</td>
-      <td>103.0</td>
-      <td>130.0</td>
+      <td>2020-01-02</td>
+      <td>56</td>
+      <td>94</td>
+      <td>11</td>
+      <td>280</td>
+      <td>250</td>
+      <td>94</td>
+      <td>125</td>
     </tr>
     <tr>
-      <th>31414</th>
+      <th>30683</th>
       <td>USW00014739</td>
-      <td>2022-01-03</td>
-      <td>63.0</td>
-      <td>6.0</td>
-      <td>-60.0</td>
-      <td>20.0</td>
-      <td>330.0</td>
-      <td>89.0</td>
-      <td>121.0</td>
+      <td>2020-01-03</td>
+      <td>32</td>
+      <td>111</td>
+      <td>67</td>
+      <td>230</td>
+      <td>230</td>
+      <td>76</td>
+      <td>94</td>
     </tr>
     <tr>
-      <th>31415</th>
+      <th>30684</th>
       <td>USW00014739</td>
-      <td>2022-01-04</td>
-      <td>44.0</td>
-      <td>-5.0</td>
-      <td>-82.0</td>
-      <td>310.0</td>
-      <td>330.0</td>
-      <td>76.0</td>
-      <td>98.0</td>
+      <td>2020-01-04</td>
+      <td>24</td>
+      <td>89</td>
+      <td>44</td>
+      <td>350</td>
+      <td>360</td>
+      <td>63</td>
+      <td>81</td>
     </tr>
     <tr>
-      <th>31416</th>
+      <th>30685</th>
       <td>USW00014739</td>
-      <td>2022-01-05</td>
-      <td>50.0</td>
-      <td>106.0</td>
-      <td>-27.0</td>
-      <td>180.0</td>
-      <td>180.0</td>
-      <td>107.0</td>
-      <td>161.0</td>
+      <td>2020-01-05</td>
+      <td>74</td>
+      <td>50</td>
+      <td>0</td>
+      <td>310</td>
+      <td>320</td>
+      <td>139</td>
+      <td>183</td>
     </tr>
     <tr>
-      <th>31417</th>
+      <th>30686</th>
       <td>USW00014739</td>
-      <td>2022-01-06</td>
-      <td>48.0</td>
-      <td>61.0</td>
-      <td>0.0</td>
-      <td>290.0</td>
-      <td>300.0</td>
-      <td>98.0</td>
-      <td>125.0</td>
+      <td>2020-01-06</td>
+      <td>30</td>
+      <td>50</td>
+      <td>-27</td>
+      <td>250</td>
+      <td>240</td>
+      <td>94</td>
+      <td>134</td>
     </tr>
     <tr>
-      <th>31418</th>
+      <th>30687</th>
       <td>USW00014739</td>
-      <td>2022-01-07</td>
-      <td>60.0</td>
-      <td>6.0</td>
-      <td>-49.0</td>
-      <td>280.0</td>
-      <td>270.0</td>
-      <td>103.0</td>
-      <td>130.0</td>
+      <td>2020-01-07</td>
+      <td>41</td>
+      <td>56</td>
+      <td>6</td>
+      <td>270</td>
+      <td>260</td>
+      <td>98</td>
+      <td>116</td>
     </tr>
     <tr>
-      <th>31419</th>
+      <th>30688</th>
       <td>USW00014739</td>
-      <td>2022-01-08</td>
-      <td>48.0</td>
-      <td>-21.0</td>
-      <td>-82.0</td>
-      <td>310.0</td>
-      <td>330.0</td>
-      <td>103.0</td>
-      <td>134.0</td>
+      <td>2020-01-08</td>
+      <td>63</td>
+      <td>72</td>
+      <td>-16</td>
+      <td>280</td>
+      <td>280</td>
+      <td>134</td>
+      <td>179</td>
     </tr>
     <tr>
-      <th>31420</th>
+      <th>30689</th>
       <td>USW00014739</td>
-      <td>2022-01-09</td>
-      <td>72.0</td>
-      <td>61.0</td>
-      <td>-60.0</td>
-      <td>230.0</td>
-      <td>230.0</td>
-      <td>143.0</td>
-      <td>197.0</td>
+      <td>2020-01-09</td>
+      <td>59</td>
+      <td>6</td>
+      <td>-55</td>
+      <td>300</td>
+      <td>300</td>
+      <td>116</td>
+      <td>161</td>
     </tr>
     <tr>
-      <th>31421</th>
+      <th>30690</th>
       <td>USW00014739</td>
-      <td>2022-01-10</td>
-      <td>75.0</td>
-      <td>44.0</td>
-      <td>-55.0</td>
-      <td>280.0</td>
-      <td>280.0</td>
-      <td>112.0</td>
-      <td>161.0</td>
+      <td>2020-01-10</td>
+      <td>62</td>
+      <td>117</td>
+      <td>-16</td>
+      <td>230</td>
+      <td>240</td>
+      <td>130</td>
+      <td>161</td>
     </tr>
     <tr>
-      <th>31422</th>
+      <th>30691</th>
       <td>USW00014739</td>
-      <td>2022-01-11</td>
-      <td>59.0</td>
-      <td>-55.0</td>
-      <td>-132.0</td>
-      <td>310.0</td>
-      <td>330.0</td>
-      <td>107.0</td>
-      <td>143.0</td>
+      <td>2020-01-11</td>
+      <td>81</td>
+      <td>211</td>
+      <td>94</td>
+      <td>230</td>
+      <td>200</td>
+      <td>174</td>
+      <td>215</td>
     </tr>
     <tr>
-      <th>31423</th>
+      <th>30692</th>
       <td>USW00014739</td>
-      <td>2022-01-12</td>
-      <td>58.0</td>
-      <td>56.0</td>
-      <td>-121.0</td>
-      <td>220.0</td>
-      <td>220.0</td>
-      <td>134.0</td>
-      <td>165.0</td>
+      <td>2020-01-12</td>
+      <td>93</td>
+      <td>233</td>
+      <td>44</td>
+      <td>210</td>
+      <td>220</td>
+      <td>161</td>
+      <td>197</td>
     </tr>
     <tr>
-      <th>31424</th>
+      <th>30693</th>
       <td>USW00014739</td>
-      <td>2022-01-13</td>
-      <td>19.0</td>
-      <td>78.0</td>
-      <td>-16.0</td>
-      <td>120.0</td>
-      <td>180.0</td>
-      <td>54.0</td>
-      <td>63.0</td>
+      <td>2020-01-13</td>
+      <td>41</td>
+      <td>61</td>
+      <td>22</td>
+      <td>20</td>
+      <td>20</td>
+      <td>76</td>
+      <td>94</td>
     </tr>
     <tr>
-      <th>31425</th>
+      <th>30694</th>
       <td>USW00014739</td>
-      <td>2022-01-14</td>
-      <td>73.0</td>
-      <td>50.0</td>
-      <td>-93.0</td>
-      <td>310.0</td>
-      <td>330.0</td>
-      <td>116.0</td>
-      <td>165.0</td>
+      <td>2020-01-14</td>
+      <td>25</td>
+      <td>56</td>
+      <td>28</td>
+      <td>70</td>
+      <td>330</td>
+      <td>40</td>
+      <td>54</td>
     </tr>
     <tr>
-      <th>31426</th>
+      <th>30695</th>
       <td>USW00014739</td>
-      <td>2022-01-15</td>
-      <td>77.0</td>
-      <td>-93.0</td>
-      <td>-155.0</td>
-      <td>320.0</td>
-      <td>330.0</td>
-      <td>125.0</td>
-      <td>152.0</td>
+      <td>2020-01-15</td>
+      <td>38</td>
+      <td>111</td>
+      <td>39</td>
+      <td>280</td>
+      <td>290</td>
+      <td>81</td>
+      <td>103</td>
     </tr>
     <tr>
-      <th>31427</th>
+      <th>30696</th>
       <td>USW00014739</td>
-      <td>2022-01-16</td>
-      <td>37.0</td>
-      <td>17.0</td>
-      <td>-149.0</td>
-      <td>120.0</td>
-      <td>110.0</td>
-      <td>103.0</td>
-      <td>125.0</td>
+      <td>2020-01-16</td>
+      <td>68</td>
+      <td>83</td>
+      <td>-10</td>
+      <td>310</td>
+      <td>320</td>
+      <td>148</td>
+      <td>201</td>
     </tr>
     <tr>
-      <th>31428</th>
+      <th>30697</th>
       <td>USW00014739</td>
-      <td>2022-01-17</td>
-      <td>107.0</td>
-      <td>94.0</td>
-      <td>17.0</td>
-      <td>100.0</td>
-      <td>120.0</td>
-      <td>197.0</td>
-      <td>250.0</td>
+      <td>2020-01-17</td>
+      <td>90</td>
+      <td>-10</td>
+      <td>-88</td>
+      <td>310</td>
+      <td>320</td>
+      <td>139</td>
+      <td>188</td>
     </tr>
     <tr>
-      <th>31429</th>
+      <th>30698</th>
       <td>USW00014739</td>
-      <td>2022-01-18</td>
-      <td>81.0</td>
-      <td>22.0</td>
-      <td>-60.0</td>
-      <td>280.0</td>
-      <td>270.0</td>
-      <td>134.0</td>
-      <td>179.0</td>
+      <td>2020-01-18</td>
+      <td>39</td>
+      <td>6</td>
+      <td>-99</td>
+      <td>320</td>
+      <td>310</td>
+      <td>89</td>
+      <td>107</td>
     </tr>
     <tr>
-      <th>31430</th>
+      <th>30699</th>
       <td>USW00014739</td>
-      <td>2022-01-19</td>
-      <td>62.0</td>
-      <td>78.0</td>
-      <td>-66.0</td>
-      <td>210.0</td>
-      <td>230.0</td>
-      <td>139.0</td>
-      <td>192.0</td>
+      <td>2020-01-19</td>
+      <td>60</td>
+      <td>72</td>
+      <td>-43</td>
+      <td>280</td>
+      <td>260</td>
+      <td>112</td>
+      <td>148</td>
     </tr>
     <tr>
-      <th>31431</th>
+      <th>30700</th>
       <td>USW00014739</td>
-      <td>2022-01-20</td>
-      <td>49.0</td>
-      <td>50.0</td>
-      <td>-71.0</td>
-      <td>330.0</td>
-      <td>320.0</td>
-      <td>98.0</td>
-      <td>125.0</td>
+      <td>2020-01-20</td>
+      <td>62</td>
+      <td>-10</td>
+      <td>-71</td>
+      <td>320</td>
+      <td>330</td>
+      <td>103</td>
+      <td>134</td>
     </tr>
   </tbody>
 </table>
@@ -1002,11 +982,10 @@ BostonLogan.head(20)
 
 
 ```python
-#date restrict df1 and df2, and restrict the columns to station, date, precipitation, and snow
-Watertown1=Watertown1[Watertown1['DATE']>='2022-01-01']
+#date restrict Watertown1, and restrict the columns to station, date, precipitation, and snow
+#remember this station did not have temperature or wind data
+Watertown1=Watertown1[Watertown1['DATE']>='2020-01-01']
 Watertown1=Watertown1[['STATION','DATE','PRCP','SNOW']]
-Watertown2=Watertown2[Watertown2['DATE']>='2022-01-01']
-Watertown2=Watertown2[['STATION','DATE','PRCP','SNOW']]
 ```
 
 
@@ -1043,218 +1022,144 @@ Watertown1.head(20) #precipitation is given in tenths of mm
   </thead>
   <tbody>
     <tr>
-      <th>1328</th>
+      <th>599</th>
       <td>US1MAMD0119</td>
-      <td>2022-01-01</td>
-      <td>5.0</td>
-      <td>0.0</td>
+      <td>2020-01-01</td>
+      <td>8</td>
+      <td>0</td>
     </tr>
     <tr>
-      <th>1329</th>
+      <th>600</th>
       <td>US1MAMD0119</td>
-      <td>2022-01-02</td>
-      <td>76.0</td>
-      <td>0.0</td>
+      <td>2020-01-02</td>
+      <td>0</td>
+      <td>0</td>
     </tr>
     <tr>
-      <th>1330</th>
+      <th>601</th>
       <td>US1MAMD0119</td>
-      <td>2022-01-03</td>
-      <td>8.0</td>
-      <td>0.0</td>
+      <td>2020-01-03</td>
+      <td>0</td>
+      <td>0</td>
     </tr>
     <tr>
-      <th>1331</th>
+      <th>602</th>
       <td>US1MAMD0119</td>
-      <td>2022-01-04</td>
-      <td>0.0</td>
-      <td>0.0</td>
+      <td>2020-01-04</td>
+      <td>0</td>
+      <td>0</td>
     </tr>
     <tr>
-      <th>1332</th>
+      <th>603</th>
       <td>US1MAMD0119</td>
-      <td>2022-01-05</td>
-      <td>0.0</td>
-      <td>0.0</td>
+      <td>2020-01-05</td>
+      <td>43</td>
+      <td>0</td>
     </tr>
     <tr>
-      <th>1333</th>
+      <th>604</th>
       <td>US1MAMD0119</td>
-      <td>2022-01-06</td>
-      <td>76.0</td>
-      <td>0.0</td>
+      <td>2020-01-06</td>
+      <td>0</td>
+      <td>0</td>
     </tr>
     <tr>
-      <th>1334</th>
+      <th>605</th>
       <td>US1MAMD0119</td>
-      <td>2022-01-07</td>
-      <td>79.0</td>
-      <td>170.0</td>
+      <td>2020-01-07</td>
+      <td>0</td>
+      <td>0</td>
     </tr>
     <tr>
-      <th>1335</th>
+      <th>606</th>
       <td>US1MAMD0119</td>
-      <td>2022-01-08</td>
-      <td>51.0</td>
-      <td>43.0</td>
+      <td>2020-01-08</td>
+      <td>0</td>
+      <td>0</td>
     </tr>
     <tr>
-      <th>1336</th>
+      <th>607</th>
       <td>US1MAMD0119</td>
-      <td>2022-01-09</td>
-      <td>0.0</td>
-      <td>0.0</td>
+      <td>2020-01-09</td>
+      <td>0</td>
+      <td>0</td>
     </tr>
     <tr>
-      <th>1337</th>
+      <th>608</th>
       <td>US1MAMD0119</td>
-      <td>2022-01-10</td>
-      <td>3.0</td>
-      <td>NaN</td>
+      <td>2020-01-10</td>
+      <td>0</td>
+      <td>0</td>
     </tr>
     <tr>
-      <th>1338</th>
+      <th>609</th>
       <td>US1MAMD0119</td>
-      <td>2022-01-11</td>
-      <td>0.0</td>
-      <td>3.0</td>
+      <td>2020-01-11</td>
+      <td>0</td>
+      <td>0</td>
     </tr>
     <tr>
-      <th>1339</th>
+      <th>610</th>
       <td>US1MAMD0119</td>
-      <td>2022-01-12</td>
-      <td>0.0</td>
-      <td>0.0</td>
+      <td>2020-01-12</td>
+      <td>18</td>
+      <td>0</td>
     </tr>
     <tr>
-      <th>1340</th>
+      <th>611</th>
       <td>US1MAMD0119</td>
-      <td>2022-01-13</td>
-      <td>0.0</td>
-      <td>0.0</td>
+      <td>2020-01-13</td>
+      <td>0</td>
+      <td>0</td>
     </tr>
     <tr>
-      <th>1341</th>
+      <th>612</th>
       <td>US1MAMD0119</td>
-      <td>2022-01-14</td>
-      <td>0.0</td>
-      <td>0.0</td>
+      <td>2020-01-14</td>
+      <td>5</td>
+      <td>0</td>
     </tr>
     <tr>
-      <th>1342</th>
+      <th>613</th>
       <td>US1MAMD0119</td>
-      <td>2022-01-15</td>
-      <td>0.0</td>
-      <td>0.0</td>
+      <td>2020-01-15</td>
+      <td>3</td>
+      <td>0</td>
     </tr>
     <tr>
-      <th>1343</th>
+      <th>614</th>
       <td>US1MAMD0119</td>
-      <td>2022-01-16</td>
-      <td>0.0</td>
-      <td>0.0</td>
+      <td>2020-01-16</td>
+      <td>18</td>
+      <td>0</td>
     </tr>
     <tr>
-      <th>1344</th>
+      <th>615</th>
       <td>US1MAMD0119</td>
-      <td>2022-01-17</td>
-      <td>203.0</td>
-      <td>0.0</td>
+      <td>2020-01-17</td>
+      <td>15</td>
+      <td>0</td>
     </tr>
     <tr>
-      <th>1345</th>
+      <th>616</th>
       <td>US1MAMD0119</td>
-      <td>2022-01-18</td>
-      <td>127.0</td>
-      <td>0.0</td>
+      <td>2020-01-18</td>
+      <td>0</td>
+      <td>0</td>
     </tr>
     <tr>
-      <th>1346</th>
+      <th>617</th>
       <td>US1MAMD0119</td>
-      <td>2022-01-19</td>
-      <td>0.0</td>
-      <td>0.0</td>
+      <td>2020-01-19</td>
+      <td>99</td>
+      <td>86</td>
     </tr>
     <tr>
-      <th>1347</th>
+      <th>618</th>
       <td>US1MAMD0119</td>
-      <td>2022-01-20</td>
-      <td>15.0</td>
-      <td>0.0</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
-
-
-```python
-Watertown2.head() #we see here that missing dates can occur (Jan 5, 2022 is missing), so need to take care of mapping dates correctly
-```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>STATION</th>
-      <th>DATE</th>
-      <th>PRCP</th>
-      <th>SNOW</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>270</th>
-      <td>US1MAMD0186</td>
-      <td>2022-01-01</td>
-      <td>3.0</td>
-      <td>NaN</td>
-    </tr>
-    <tr>
-      <th>271</th>
-      <td>US1MAMD0186</td>
-      <td>2022-01-02</td>
-      <td>81.0</td>
-      <td>NaN</td>
-    </tr>
-    <tr>
-      <th>272</th>
-      <td>US1MAMD0186</td>
-      <td>2022-01-03</td>
-      <td>5.0</td>
-      <td>NaN</td>
-    </tr>
-    <tr>
-      <th>273</th>
-      <td>US1MAMD0186</td>
-      <td>2022-01-04</td>
-      <td>0.0</td>
-      <td>0.0</td>
-    </tr>
-    <tr>
-      <th>274</th>
-      <td>US1MAMD0186</td>
-      <td>2022-01-06</td>
-      <td>71.0</td>
-      <td>NaN</td>
+      <td>2020-01-20</td>
+      <td>0</td>
+      <td>0</td>
     </tr>
   </tbody>
 </table>
@@ -1266,92 +1171,74 @@ Watertown2.head() #we see here that missing dates can occur (Jan 5, 2022 is miss
 
 ### Quick plots
 
-Plot temperature, precipitation, highlight special wind events (wind coming from ENE to ESE).
-
 
 ```python
-#first quick plot of the temperature ... only important to gauge snowfall vs rain
-plt.plot(BostonLogan['TMIN']/10)
-plt.plot(BostonLogan['TMAX']/10)
+#first quick plot of the temperature in degrees Celsius (data given in tenths of degrees)
+#seasons are clearly visible for the past couple years
+days=np.arange(1,len(BostonLogan)+1)
+plt.plot(days,BostonLogan['TMIN']/10)
+plt.plot(days,BostonLogan['TMAX']/10);
 ```
 
 
-
-
-    [<matplotlib.lines.Line2D at 0x143ebf70>]
-
-
-
-
     
-![png](output_28_1.png)
+![png](output_23_0.png)
     
 
 
 
 ```python
-#first quick plot of precipitation/rain and snow in cm
+#first quick plot of precipitation/rain and snow in cm (data given in tenths of mm)
 days=np.arange(1,len(Watertown1)+1)
 plt.bar(days,Watertown1['PRCP']/100)
-plt.bar(days,Watertown1['SNOW']/100)
+plt.bar(days,Watertown1['SNOW']/100);
 ```
 
 
-
-
-    <BarContainer object of 442 artists>
-
-
-
-
     
-![png](output_29_1.png)
+![png](output_24_0.png)
     
 
 
 
 ```python
-#first quick plot of wind speed, highlighting wind coming from ENE to ESE directions (60 to 120 degrees from true North)
+#first quick plot of wind speed in kilometers per hour (data is given in tenths of meters per second), 
+#highlighting wind coming from ENE to ESE (60 to 120 degrees from true North) in CYAN
+#use the speed and direction of fastest 2-min wind, as we have no hourly average data available
 days=np.arange(1,len(BostonLogan)+1)
 col=np.where((BostonLogan['WDF2']>=60) & (BostonLogan['WDF2']<=120),'c','k')
-plt.scatter(days,BostonLogan['WSF2'],c=col,s=1)
+plt.scatter(days,BostonLogan['WSF2']*0.36,c=col,s=1); 
 ```
 
 
-
-
-    <matplotlib.collections.PathCollection at 0x13cb4bb0>
-
-
-
-
     
-![png](output_30_1.png)
+![png](output_25_0.png)
     
 
+
+Next, create better plots that allow for color highlighting special conditions (such as wind coming from the ESE to ENE), with a proper scale on the x-axis (dates), and which properly connect relevant date ranges to special conditions.
 
 ### Detailed plots
 
 
 ```python
-#indexing by date
+#indexing by date...this happens in-place
 Watertown1.index=pd.DatetimeIndex(Watertown1.DATE)
-Watertown2.index=pd.DatetimeIndex(Watertown2.DATE)
 BostonLogan.index=pd.DatetimeIndex(BostonLogan.DATE)
 ```
 
 
 ```python
-#reindex, filling in missing dates, so that all dataframes have the same index (NOW we have new objects with np.NaN filled)
+#reindex, filling in missing dates with a row of NaNs
+#so that both dataframes have the same index (NOW we have new objects so an assignment is necessary)
 today=pd.to_datetime('today').date()
-Watertown1=Watertown1.reindex(pd.date_range("2022-01-01", today))
-Watertown2=Watertown2.reindex(pd.date_range("2022-01-01", today))
-BostonLogan=BostonLogan.reindex(pd.date_range("2022-01-01", today))
+Watertown1=Watertown1.reindex(pd.date_range("2020-01-01", today))
+BostonLogan=BostonLogan.reindex(pd.date_range("2020-01-01", today))
 ```
 
 
 ```python
-Watertown2.head()
+Watertown1.head()
 ```
 
 
@@ -1383,39 +1270,143 @@ Watertown2.head()
   </thead>
   <tbody>
     <tr>
-      <th>2022-01-01</th>
-      <td>US1MAMD0186</td>
-      <td>2022-01-01</td>
-      <td>3.0</td>
-      <td>NaN</td>
+      <th>2020-01-01</th>
+      <td>US1MAMD0119</td>
+      <td>2020-01-01</td>
+      <td>8</td>
+      <td>0</td>
     </tr>
     <tr>
-      <th>2022-01-02</th>
-      <td>US1MAMD0186</td>
-      <td>2022-01-02</td>
-      <td>81.0</td>
-      <td>NaN</td>
+      <th>2020-01-02</th>
+      <td>US1MAMD0119</td>
+      <td>2020-01-02</td>
+      <td>0</td>
+      <td>0</td>
     </tr>
     <tr>
-      <th>2022-01-03</th>
-      <td>US1MAMD0186</td>
-      <td>2022-01-03</td>
-      <td>5.0</td>
-      <td>NaN</td>
+      <th>2020-01-03</th>
+      <td>US1MAMD0119</td>
+      <td>2020-01-03</td>
+      <td>0</td>
+      <td>0</td>
     </tr>
     <tr>
-      <th>2022-01-04</th>
-      <td>US1MAMD0186</td>
-      <td>2022-01-04</td>
-      <td>0.0</td>
-      <td>0.0</td>
+      <th>2020-01-04</th>
+      <td>US1MAMD0119</td>
+      <td>2020-01-04</td>
+      <td>0</td>
+      <td>0</td>
     </tr>
     <tr>
-      <th>2022-01-05</th>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>NaN</td>
+      <th>2020-01-05</th>
+      <td>US1MAMD0119</td>
+      <td>2020-01-05</td>
+      <td>43</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+BostonLogan.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>STATION</th>
+      <th>DATE</th>
+      <th>AWND</th>
+      <th>TMAX</th>
+      <th>TMIN</th>
+      <th>WDF2</th>
+      <th>WDF5</th>
+      <th>WSF2</th>
+      <th>WSF5</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>2020-01-01</th>
+      <td>USW00014739</td>
+      <td>2020-01-01</td>
+      <td>69</td>
+      <td>61</td>
+      <td>22</td>
+      <td>260</td>
+      <td>250</td>
+      <td>130</td>
+      <td>188</td>
+    </tr>
+    <tr>
+      <th>2020-01-02</th>
+      <td>USW00014739</td>
+      <td>2020-01-02</td>
+      <td>56</td>
+      <td>94</td>
+      <td>11</td>
+      <td>280</td>
+      <td>250</td>
+      <td>94</td>
+      <td>125</td>
+    </tr>
+    <tr>
+      <th>2020-01-03</th>
+      <td>USW00014739</td>
+      <td>2020-01-03</td>
+      <td>32</td>
+      <td>111</td>
+      <td>67</td>
+      <td>230</td>
+      <td>230</td>
+      <td>76</td>
+      <td>94</td>
+    </tr>
+    <tr>
+      <th>2020-01-04</th>
+      <td>USW00014739</td>
+      <td>2020-01-04</td>
+      <td>24</td>
+      <td>89</td>
+      <td>44</td>
+      <td>350</td>
+      <td>360</td>
+      <td>63</td>
+      <td>81</td>
+    </tr>
+    <tr>
+      <th>2020-01-05</th>
+      <td>USW00014739</td>
+      <td>2020-01-05</td>
+      <td>74</td>
+      <td>50</td>
+      <td>0</td>
+      <td>310</td>
+      <td>320</td>
+      <td>139</td>
+      <td>183</td>
     </tr>
   </tbody>
 </table>
@@ -1462,33 +1453,33 @@ BostonLogan.tail() #there appears to be a several day lag in publishing the late
   </thead>
   <tbody>
     <tr>
-      <th>2023-03-20</th>
+      <th>2023-05-05</th>
       <td>USW00014739</td>
-      <td>2023-03-20</td>
-      <td>58.0</td>
-      <td>111.0</td>
-      <td>-22.0</td>
-      <td>230.0</td>
-      <td>250.0</td>
-      <td>107.0</td>
-      <td>134.0</td>
+      <td>2023-05-05</td>
+      <td>39</td>
+      <td>128</td>
+      <td>78</td>
+      <td>40</td>
+      <td>NaN</td>
+      <td>67</td>
+      <td>NaN</td>
     </tr>
     <tr>
-      <th>2023-03-21</th>
+      <th>2023-05-06</th>
       <td>USW00014739</td>
-      <td>2023-03-21</td>
+      <td>2023-05-06</td>
       <td>NaN</td>
-      <td>144.0</td>
-      <td>11.0</td>
+      <td>244</td>
+      <td>106</td>
       <td>NaN</td>
       <td>NaN</td>
       <td>NaN</td>
       <td>NaN</td>
     </tr>
     <tr>
-      <th>2023-03-22</th>
+      <th>2023-05-07</th>
       <td>USW00014739</td>
-      <td>2023-03-22</td>
+      <td>2023-05-07</td>
       <td>NaN</td>
       <td>NaN</td>
       <td>NaN</td>
@@ -1498,9 +1489,9 @@ BostonLogan.tail() #there appears to be a several day lag in publishing the late
       <td>NaN</td>
     </tr>
     <tr>
-      <th>2023-03-23</th>
+      <th>2023-05-08</th>
       <td>NaN</td>
-      <td>NaN</td>
+      <td>NaT</td>
       <td>NaN</td>
       <td>NaN</td>
       <td>NaN</td>
@@ -1510,9 +1501,9 @@ BostonLogan.tail() #there appears to be a several day lag in publishing the late
       <td>NaN</td>
     </tr>
     <tr>
-      <th>2023-03-24</th>
+      <th>2023-05-09</th>
       <td>NaN</td>
-      <td>NaN</td>
+      <td>NaT</td>
       <td>NaN</td>
       <td>NaN</td>
       <td>NaN</td>
@@ -1527,151 +1518,206 @@ BostonLogan.tail() #there appears to be a several day lag in publishing the late
 
 
 
+Plot the precipitation (rain only) data for the year 2022 from Watertown1 dataframe, and pull the wind data from BostonLogan, highlight Eastern winds.
+
 
 ```python
-plt.figure(figsize=(10,4.5))
-threshw=100 #wind threshold
-threshr=100 #rain threshold
-dirmin=60
-dirmax=140
-mask=((BostonLogan['WDF2']>=dirmin) & (BostonLogan['WDF2']<=dirmax) & (BostonLogan['WSF2']>=threshw)
-      & ((Watertown1['PRCP']>=threshr) | (Watertown2['PRCP']>=threshr)))
-plt.bar(Watertown1.index, Watertown1['PRCP'])
-plt.scatter(BostonLogan.loc[mask].index,Watertown1.loc[mask]['PRCP'],marker='o')
-plt.axis(xmin=pd.to_datetime('2022-01-01').date(),xmax=pd.to_datetime('today').date())
+plt.figure(figsize=(20,4.5))
+plt.title('2022 Precipitation in Combination with strong Eastern winds in Watertown, MA')
+days=pd.date_range("2022-01-01", "2022-12-31")
+threshw=100 #wind threshold (tenths of meters per second)
+threshr=100 #rain threshold (tenths of mm)
+dirmin=60 #minimum wind direction (degrees from true North)
+dirmax=140 #maximum wind direction
+mask=((BostonLogan.loc[days]['WDF2']>=dirmin) & (BostonLogan.loc[days]['WDF2']<=dirmax) & (BostonLogan.loc[days]['WSF2']>=threshw)
+      & (Watertown1.loc[days]['PRCP']>=threshr))
+plt.bar(days, Watertown1.loc[days]['PRCP'])
+plt.scatter(days[mask],Watertown1.loc[days].loc[mask]['PRCP'],marker='o')
+plt.axis(xmin=days[0].date(),xmax=days[-1].date())
 plt.ylabel('Precipitation [1/10 mm]')
-plt.xticks(BostonLogan.loc[mask].index,rotation=90)
-plt.title('Precipitation in Combination with strong Eastern winds in Watertown, MA');
+plt.xticks(days[mask],rotation=90);
 ```
 
 
     
-![png](output_36_0.png)
+![png](output_34_0.png)
     
 
 
 
 ```python
-BostonLogan.loc[mask], Watertown1.loc[mask], Watertown2.loc[mask]
-#we see the rainfall amounts are generally similar between the two Watertown stations, 
-#and the average wind speed vs fastest 2-min wind (WSF2) gives us an
-#idea about which days have sustained strong winds
+BostonLogan.loc[days].loc[mask][['AWND','WSF2']]
+#and the average wind speed vs fastest 2-min wind (WSF2) may give us an
+#idea about which days really had sustained strong Eastern winds
+#even better: obtain more granular data (hourly)
 ```
 
 
 
 
-    (                STATION        DATE   AWND   TMAX   TMIN   WDF2   WDF5   WSF2  \
-     2022-01-17  USW00014739  2022-01-17  107.0   94.0   17.0  100.0  120.0  197.0   
-     2022-03-24  USW00014739  2022-03-24   75.0   61.0   39.0  110.0  110.0  107.0   
-     2022-04-08  USW00014739  2022-04-08   55.0  172.0   67.0  130.0  120.0  134.0   
-     2022-04-19  USW00014739  2022-04-19   97.0  150.0   61.0  130.0   80.0  165.0   
-     2022-10-14  USW00014739  2022-10-14   44.0  206.0  139.0  130.0  130.0  125.0   
-     2022-11-16  USW00014739  2022-11-16   67.0  139.0   28.0  100.0  280.0  116.0   
-     2022-12-16  USW00014739  2022-12-16  110.0   72.0   56.0   70.0   60.0  143.0   
-     2023-01-20  USW00014739  2023-01-20   45.0   33.0   -5.0   60.0   60.0  161.0   
-     2023-03-04  USW00014739  2023-03-04   93.0   28.0   -6.0   80.0   90.0  165.0   
-     
-                  WSF5  
-     2022-01-17  250.0  
-     2022-03-24  130.0  
-     2022-04-08  170.0  
-     2022-04-19  206.0  
-     2022-10-14  157.0  
-     2022-11-16  152.0  
-     2022-12-16  183.0  
-     2023-01-20  192.0  
-     2023-03-04  201.0  ,
-                     STATION        DATE   PRCP  SNOW
-     2022-01-17  US1MAMD0119  2022-01-17  203.0   0.0
-     2022-03-24  US1MAMD0119  2022-03-24  102.0   0.0
-     2022-04-08  US1MAMD0119  2022-04-08  117.0   0.0
-     2022-04-19  US1MAMD0119  2022-04-19  300.0   0.0
-     2022-10-14  US1MAMD0119  2022-10-14  330.0   0.0
-     2022-11-16  US1MAMD0119  2022-11-16  175.0   0.0
-     2022-12-16  US1MAMD0119  2022-12-16  170.0   0.0
-     2023-01-20  US1MAMD0119  2023-01-20  269.0   5.0
-     2023-03-04  US1MAMD0119  2023-03-04  130.0   NaN,
-                     STATION        DATE   PRCP  SNOW
-     2022-01-17  US1MAMD0186  2022-01-17  198.0   NaN
-     2022-03-24  US1MAMD0186  2022-03-24   89.0   NaN
-     2022-04-08  US1MAMD0186  2022-04-08  117.0   NaN
-     2022-04-19  US1MAMD0186  2022-04-19  295.0   NaN
-     2022-10-14  US1MAMD0186  2022-10-14  287.0   NaN
-     2022-11-16  US1MAMD0186  2022-11-16  145.0   NaN
-     2022-12-16  US1MAMD0186  2022-12-16  137.0   NaN
-     2023-01-20  US1MAMD0186  2023-01-20  267.0   NaN
-     2023-03-04  US1MAMD0186  2023-03-04  124.0   NaN)
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>AWND</th>
+      <th>WSF2</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>2022-01-17</th>
+      <td>107</td>
+      <td>197</td>
+    </tr>
+    <tr>
+      <th>2022-03-24</th>
+      <td>75</td>
+      <td>107</td>
+    </tr>
+    <tr>
+      <th>2022-04-08</th>
+      <td>55</td>
+      <td>134</td>
+    </tr>
+    <tr>
+      <th>2022-04-19</th>
+      <td>97</td>
+      <td>165</td>
+    </tr>
+    <tr>
+      <th>2022-10-14</th>
+      <td>44</td>
+      <td>125</td>
+    </tr>
+    <tr>
+      <th>2022-11-16</th>
+      <td>67</td>
+      <td>116</td>
+    </tr>
+    <tr>
+      <th>2022-12-16</th>
+      <td>110</td>
+      <td>143</td>
+    </tr>
+  </tbody>
+</table>
+</div>
 
 
 
 
 ```python
-#%matplotlib notebook
-#uncomment the above to have interactive output (functional sliders, etc.) for this cell, or simply run the next cell
+#create plotting function..this can also be found in getweatherdata.py
+def make_labeled_plot(title):
+    fig,ax=plt.subplots(figsize=(20,4.5))
+    ax.set_title(title)
+    plt.setp(ax.get_xticklabels(),rotation=90)
+    return fig,ax
+```
 
-#initialize plot
-fig,ax=plt.subplots(figsize=(20,4.5))
 
-ax.set_ylabel('Precipitation [1/10 mm]')
-ax.set_title('Precipitation in combination with strong Eastern winds in Watertown, MA')
-ax.set_xlim(xmin=pd.to_datetime('2022-01-01').date(),xmax=pd.to_datetime('today').date())
-plt.setp(ax.get_xticklabels(),rotation=90)
-
-dirmin_init=60
-dirmax_init=140
-threshr_init=100
-threshw_init=100
-mask=((BostonLogan['WDF2']>=dirmin_init) & (BostonLogan['WDF2']<=dirmax_init) & (BostonLogan['AWND']>=threshw_init) & (Watertown1['PRCP']>=threshr_init))
-col=np.where(mask,'r','k')
-bars=ax.bar(Watertown1.index,Watertown1['PRCP'],color=col)#initialize bar plot with colored bars
-for i in range(len(bars)): #also adjust opacity
-    if mask[i]:
-        bars[i].set(alpha=1)
-    else:
-        bars[i].set(alpha=0.3)
-ticks=ax.set_xticks(BostonLogan.loc[mask].index)#point out colored bars with tick labels
-#plt.show()
-
-#plot update function
-def weatherplot(threshr,threshw,direction,complement):
-    #use AWND to gauge sustained strong wind
-    mask= (BostonLogan['AWND']>=threshw) & (Watertown1['PRCP']>=threshr)
+```python
+#plot update function...adapt for other locations
+def barplot_weather(ax,year,threshr,threshw,direction,complement):
+    #check if any changes to the bar heights and xlim are necessary (i.e., check if xlim is already set/correct)
+    if year!=str(num2date(ax.get_xlim()[0]).date().year):
+        #set view x-limits for current year
+        if pd.to_datetime(year+'-12-31')>BostonLogan.index[-1]:
+            dates=pd.date_range(year+'-01-01',BostonLogan.index[-1])
+        else:
+            dates=pd.date_range(year+'-01-01',year+'-12-31')    
+        ax.set_xlim(xmin=dates[0].date(),xmax=dates[-1].date())  
+        if len(ax.containers)>0: #already have bars (drawn)
+            ax.containers[0].remove() #this works, whereas .pop() does not remove the already drawn artist
+                                      #from the canvas, so it comes into view again when xlim is set appropriately
+        ax.bar(Watertown1.loc[dates].index,Watertown1.loc[dates]['PRCP'])#this (re-)creates the barplot artist in ax
+        #need the prior call to .remove(), as every call to ax.bar()
+        #adds a new barcontainer artist to ax.containers, which is not what we want;
+        #to avoid adding and removing the same bar plots repeatedly, would need to make
+        #bar plot of all data (2020-2023) and edit the opacity of the correct portion (within current xlim)
+    else: #year hasn't changed
+        xlims=ax.get_xlim()
+        dates=pd.date_range(num2date(xlims[0]).date(),num2date(xlims[1]).date()) 
+    mask= (BostonLogan.loc[dates]['WSF2']>=threshw) & (Watertown1.loc[dates]['PRCP']>=threshr)
     if complement:
-        mask=mask&((BostonLogan['WDF2']<=direction[0]) | (BostonLogan['WDF2']>=direction[1]))
+        mask=mask&((BostonLogan.loc[dates]['WDF2']<=direction[0]) | (BostonLogan.loc[dates]['WDF2']>=direction[1]))
     else:
-        mask=mask&(BostonLogan['WDF2']>=direction[0]) & (BostonLogan['WDF2']<=direction[1])
-    for i in range(len(bars)):
+        mask=mask&(BostonLogan.loc[dates]['WDF2']>=direction[0]) & (BostonLogan.loc[dates]['WDF2']<=direction[1])
+    bars=ax.containers[0]
+    for i in range(len(bars)): #update the bars with color and opacity according to mask
         if mask[i]:
             bars[i].set(color='r',alpha=1)
         else:
             bars[i].set(color='k',alpha=0.3)
-    ticks=ax.set_xticks(BostonLogan.loc[mask].index)
-    fig.canvas.draw_idle()
+    ticks=ax.set_xticks(BostonLogan.loc[dates].loc[mask].index)
+```
 
-#make room for the sliders
+
+```python
+#%matplotlib notebook
+#uncomment the above to have interactive output (functional sliders, etc.) for this cell
+#or simply run the following cell for an alternative using ipywidgets
+
+#initialize plot
+fig,ax=make_labeled_plot('Precipitation and Wind in Watertown, MA')
+
+#set y limits and labels
+ax.set_ylim(bottom=0,top=max(Watertown1['PRCP']))
+ax.set_ylabel('Precipitation [1/10 mm]')
+
+#initial values and ranges for controls
+dirmin_init=60
+dirmax_init=140
+rrange=[0,max(Watertown1['PRCP'])]
+threshr_init=100
+wrange=[0,400]
+threshw_init=100
+years=['2020','2021','2022','2023']
+year_init='2022'
+
+#make room for the controls
 fig.subplots_adjust(left=0.1, bottom=0.5)
 
-#create new axes, sliders, and checkbox
-axr=fig.add_axes([0.03, 0.5, 0.01, 0.38])
-r_slider=Slider(ax=axr,valinit=threshr_init,valmin=0,valmax=400,label='rain threshold',orientation='vertical')
-axw=fig.add_axes([0.1, 0.2, 0.2, 0.04])
-w_slider=Slider(ax=axw,valinit=threshw_init,valmin=0,valmax=400,label='wind threshold')
-axd=fig.add_axes([0.1, 0.1, 0.2, 0.04])
+#create new axes, radio buttons, sliders, and checkbox
+axr=fig.add_axes([0.04, 0.5, 0.01, 0.38])
+r_slider=Slider(ax=axr,valinit=threshr_init,valmin=rrange[0],valmax=rrange[1],label='rain threshold',orientation='vertical')
+axy=fig.add_axes([0.11, 0.1, 0.1, 0.15])
+y_buttons=RadioButtons(ax=axy,labels=years, active=years.index(year_init))
+axw=fig.add_axes([0.35, 0.2, 0.2, 0.04])
+w_slider=Slider(ax=axw,valinit=threshw_init,valmin=wrange[0],valmax=wrange[1],label='wind threshold')
+axd=fig.add_axes([0.35, 0.1, 0.2, 0.04])
 d_slider=RangeSlider(ax=axd,valinit=[dirmin_init,dirmax_init],valmin=0,valmax=360,label='wind direction')
-axc=fig.add_axes([0.35, 0.1, 0.2, 0.04])
+axc=fig.add_axes([0.63, 0.1, 0.27, 0.04])
 c_box=CheckButtons(ax=axc,labels=['use complement of direction interval'])
 
 #update function accepts exactly one (dummy) argument
 def update(arg):
-    weatherplot(r_slider.val,w_slider.val,d_slider.val,c_box.get_status()[0]) 
-    #vals of sliders and the status of the first (and only) checkbutton passed to the actual update function weatherplot()
-
+    #vals of radio buttons, sliders and the status of the first (and only)
+    #checkbutton passed to the actual update function barplot_weather()
+    barplot_weather(ax,y_buttons.value_selected,r_slider.val,w_slider.val,d_slider.val,c_box.get_status()[0]) 
+    #fig.canvas.draw_idle() ... not necesssary within jupyter notebook
 #register sliders and checkbox with the update function
+y_buttons.on_clicked(update)
 r_slider.on_changed(update)
 w_slider.on_changed(update)
 d_slider.on_changed(update)
-c_box.on_clicked(update);
+c_box.on_clicked(update)
+update(0); #for initial plot before any controls are changed
+#plt.show() ... not necessary within jupyter notebook
 ```
 
 
@@ -1684,49 +1730,45 @@ c_box.on_clicked(update);
 ```python
 #%matplotlib inline
 #run the notebook in order to use the widgets and see the output
-fig,ax=plt.subplots(figsize=(20,4.5))
+fig2,ax2=make_labeled_plot('Precipitation and Wind in Watertown, MA')
 
-ax.set_ylabel('Precipitation [1/10 mm]')
-ax.set_title('Precipitation in combination with strong Eastern winds in Watertown, MA')
-ax.set_xlim(xmin=pd.to_datetime('2022-01-01').date(),xmax=pd.to_datetime('today').date())
-plt.setp(ax.get_xticklabels(),rotation=90)
-#plt.setp(ax,visible=False) #this only makes the first plot "blank", but doesn't stop it from appearing
+plt.close(fig2) #don't show figure (yet), stops first (empty) plot from appearing
 
-bars=ax.bar(Watertown1.index,Watertown1['PRCP'])#initialize bar plot
-plt.close(fig)#don't show figure (yet), stops first plot from appearing
+#set y limits and labels
+ax2.set_ylim(bottom=0,top=max(Watertown1['PRCP']))
+ax2.set_ylabel('Precipitation [1/10 mm]')
+
+#initial values and ranges for controls
+dirmin_init=60
+dirmax_init=140
+rrange=[0,max(Watertown1['PRCP'])]
+threshr_init=100
+wrange=[0,400]
+threshw_init=100
+years=['2020','2021','2022','2023']
+year_init='2022'
 
 #plot update function
-def weatherplot(threshr,threshw,direction,complement):
-    #plt.clf() #does not remove the plot drawn outside of this function
-    #use AWND to gauge sustained strong wind
-    mask= (BostonLogan['AWND']>=threshw) & (Watertown1['PRCP']>=threshr)
-    if complement:
-        mask&=((BostonLogan['WDF2']<=direction[0]) | (BostonLogan['WDF2']>=direction[1]))
-    else:
-        mask&=(BostonLogan['WDF2']>=direction[0]) & (BostonLogan['WDF2']<=direction[1])
-    for i in range(len(bars)):
-        if mask[i]:
-            bars[i].set(color='r',alpha=1)
-        else:
-            bars[i].set(color='k',alpha=0.3)
-    ticks=ax.set_xticks(BostonLogan.loc[mask].index)
-    #plt.show() ... does not seem to do the trick
-    #fig.canvas.draw_idle() ... does not seem to do the trick
-    display(fig)
-    #return fig#same effect as display(), this redraws the figure below, but it doesn't close/update the figure if drawn outside this function
-
-r_slider=widgets.IntSlider(value=100,min=0,max=400,step=1, description='rain threshold', continuous_update=False)
-w_slider=widgets.IntSlider(value=100,min=0,max=400,step=1,description='wind threshold', continuous_update=False)
-d_slider=widgets.IntRangeSlider(value=[60,140],min=0,max=360,step=1,description='wind direction', continuous_update=False)
+def update_interact(year,threshr,threshw,direction,complement):
+    barplot_weather(ax2,year,threshr,threshw,direction,complement)
+    #neither plt.show() nor fig.canvas.draw_idle() seem to actually update the plot
+    display(fig2)#this or "return fig2" is needed, completely redraws the figure below
+                 #but it doesn't close/update fig if drawn outside of this function
+                 #plt.clf() also does not remove fig if drawn outside of this function
+      
+y_menu=widgets.Dropdown(options=years,value=year_init,description='year')
+r_slider=widgets.IntSlider(value=threshr_init,min=rrange[0],max=rrange[1],step=1, description='rain threshold', continuous_update=False)
+w_slider=widgets.IntSlider(value=threshw_init,min=wrange[0],max=wrange[1],step=1,description='wind threshold', continuous_update=False)
+d_slider=widgets.IntRangeSlider(value=[dirmin_init,dirmax_init],min=0,max=360,step=1,description='wind direction', continuous_update=False)
 c_box=widgets.Checkbox(value=False,description='use complement of direction interval',disabled=False,indent=False)
 
 
-interact(weatherplot,threshr=r_slider,threshw=w_slider,direction=d_slider,complement=c_box);
+interact(update_interact,year=y_menu,threshr=r_slider,threshw=w_slider,direction=d_slider,complement=c_box);
 
 ```
 
 
-    interactive(children=(IntSlider(value=100, continuous_update=False, description='rain threshold', max=400), In…
+    interactive(children=(Dropdown(description='year', index=2, options=('2020', '2021', '2022', '2023'), value='2…
 
 
 

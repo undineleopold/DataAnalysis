@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 from matplotlib.dates import num2date
 from matplotlib.widgets import RadioButtons, Slider, RangeSlider, CheckButtons
 
-def get_stations(filename):
-    if not os.path.isfile(filename): #download file
+def get_stations(filename=None,city=None,state=None):
+    if not filename or not os.path.isfile(filename): #download file
         response=requests.get('https://www1.ncdc.noaa.gov/pub/data/ghcn/daily/ghcnd-stations.txt') #stations in the network    
         with open('filename', 'w') as file: #write stations to file for future reference
             file.write(response.text)
@@ -16,6 +16,11 @@ def get_stations(filename):
                                                 'gsn','hcn','wmo'],
                                          dtype=['U11','d','d','d','U3','U31','U4','U4','U6'],
                                          autostrip=True)
+    if city:
+        if state:
+            stations=stations[np.logical_and(np.char.find(stations['name'],city.upper())==0,stations['state']==state)]
+        else:
+            stations=stations[np.char.find(stations['name'],city.upper())==0]
     return stations
 
 def dly_to_df(filename):
@@ -66,9 +71,23 @@ def dly_to_csv(filename, target=None):
     pdata.to_csv(target+'.csv', index=False)
     return pdata
 
-#function to load (and possibly store) data from 2020's
-def data_load20():
-    pass
+#function returning a restricted df with data from 2020's, missing dates filled
+def df_format_20(df):
+    #keep only columns which have at least one non-null entry
+    df=df[df.columns[df.notnull().sum()>0]]
+    cols=list(df.columns.values)
+    mask=list(pd.Series(cols).str.match('^(AW|WD|WS|TM|PR)[^B]\w{1}$')) #columns starting AW, WD, WS, TM, or PR, not followed by B,
+    #4 characters only (so no flag columns)
+    cols=[col for i,col in enumerate(cols) if mask[i]]
+
+    print('Fields available for analysis: ', cols)
+    #now restrict the columns to cols+identifying columns, and restrict the date range to the last couple years
+    df=df[['STATION','DATE']+cols]
+    df=df[df['DATE']>='2020-01-01']
+
+    df.index=pd.DatetimeIndex(df.DATE)
+    df=df.reindex(pd.date_range("2020-01-01", pd.to_datetime('today').date()))
+    return df
 
 #date plot init
 def make_labeled_date_plot(title):
@@ -113,9 +132,9 @@ def barplot_prcp(df,ax,year,threshr,threshw,direction,complement):
     ticks=ax.set_xticks(df.loc[dates].loc[mask].index)
 
 #create prcp plot
-def make_prcp20_plot(df,title):
+def make_prcp_plot_20(df,title):
     #check that it has the necessary fields, and dates from 2020-01-01
-
+    df=df_format_20(df)
     
     #initialize plot
     fig,ax=make_labeled_date_plot(title)
@@ -156,7 +175,7 @@ def make_prcp20_plot(df,title):
     #update function accepts exactly one (dummy) argument
     def update(arg):
         #vals of radio buttons, sliders and the status of the first (and only)
-        #checkbutton passed to the actual update function barplot_weather()
+        #checkbutton passed to the actual update function barplot_prcp()
         barplot_prcp(df,ax,y_buttons.value_selected,r_slider.val,w_slider.val,d_slider.val,c_box.get_status()[0]) 
         #one of the following is needed, otherwise the plot does not update correctly
         #fig.canvas.draw()

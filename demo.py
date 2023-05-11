@@ -5,40 +5,47 @@ import pandas as pd
 import weatherdata as w
 import matplotlib.pyplot as plt
 
+while True: #main loop...
+    city=input('City (hit ENTER for default=Boston): ')
 
-stations = np.genfromtxt(os.getcwd()+'/stationdata.txt', delimiter=[11,9,10,7,3,31,4,4,6],
-                                         names=['id','latitude','longitude','elevation','state','name',
-                                                'gsn','hcn','wmo'],
-                                         dtype=['U11','d','d','d','U3','U31','U4','U4','U6'],
-                                         autostrip=True)
+    state=input('State or Province (hit ENTER for default=MA): ')
+    if city=='':
+        city='Boston'
+        if state=='':
+            state='MA'
+    stations = w.get_stations('stationdata.txt',city,state)
+    n=len(stations)
+    if n==0:
+        print('No stations found.')
+    else:
+        print(f'Stations found for {city},{state}: ')
+        print('Option \t Station')
+        for i,station in enumerate(stations):
+            print(i+1,'\t',station)
 
-reload=input('reload? y/n: ')
-if reload=='y':
-    response=requests.get('https://www1.ncdc.noaa.gov/pub/data/ghcn/daily/all/USW00014739.dly')
-    with open('BostonLogan.dly', 'w') as file:
-        file.write(response.text)
-    BostonLogan=w.dly_to_csv('BostonLogan.dly','BOSTONLOGAN')
-else:
-    BostonLogan=pd.read_csv('BOSTONLOGAN.csv', low_memory=False)
+        while True: #keep asking for input until a valid number or 'q' is entered
+            selection=input(f'Select option from list above (1-{n}) or press \'q\'(quit): ')
+            if selection=='q':
+                break #break station selection loop for given city, state
+            if (s:=int(selection)-1) in range(n):
+                station_id=stations[s][0].strip() #strip leading and trailing whitespace
+                if (os.path.isfile(station_id+'.csv') or os.path.isfile(station_id+'.dly')) and input('Reload? \'y\'/<any other key>: ')!='y':
+                    print('Opening file of existing data for station '+station_id+' ...')
+                    try:
+                        df=pd.read_csv(station_id+'.csv', low_memory=False)
+                    except FileNotFoundError: #have the .dly file, read it into df and also create .csv
+                        df=w.dly_to_csv(station_id+'.dly',station_id)
 
-print('Retrieved data')
+                else:
+                    print('(Re-)Loading data for station '+station_id+' ...')
+                    response=requests.get('https://www1.ncdc.noaa.gov/pub/data/ghcn/daily/all/'+station_id+'.dly')
+                    with open(station_id+'.dly', 'w') as file:
+                        file.write(response.text)
+                    df=w.dly_to_csv(station_id+'.dly',station_id)
+                    
+                print(f'Retrieved data for {city}, {state} at station {station_id}.')
+                w.make_prcp_plot_20(df,f'Precipitation and Wind in {city}, {state}')
 
-#keep only columns which have at least one non-null entry
-BostonLogan=BostonLogan[BostonLogan.columns[BostonLogan.notnull().sum()>0]]
-
-cols=list(BostonLogan.columns.values)
-mask=list(pd.Series(cols).str.match('^(AW|WD|WS|TM|PR)[^B]\w{1}$')) #columns starting AW, WD, WS, or TM, not followed by B,
-#4 characters only (so no flag columns)
-cols=[col for i,col in enumerate(cols) if mask[i]]
-
-print('Fields available for analysis: ', cols)
-
-#now restrict the columns to cols+identifying columns, and restrict the date range to the last couple years
-BostonLogan=BostonLogan[['STATION','DATE']+cols]
-BostonLogan=BostonLogan[BostonLogan['DATE']>='2020-01-01']
-
-BostonLogan.index=pd.DatetimeIndex(BostonLogan.DATE)
-today=pd.to_datetime('today').date()
-BostonLogan=BostonLogan.reindex(pd.date_range("2020-01-01", today))
-
-w.make_prcp20_plot(BostonLogan,'Rain and Wind in Boston, MA')
+    q=input('Quit? \'y\'/<any other key>: ')
+    if q=='y':
+        break #end program

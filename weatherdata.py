@@ -1,14 +1,16 @@
 import os
+import requests
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.dates import num2date
 from matplotlib.widgets import RadioButtons, Slider, RangeSlider, CheckButtons
 
-def get_stations(filename=None,city=None,state=None):
-    if not filename or not os.path.isfile(filename): #download file
+def get_stations(city=None,state=None):
+    filename='stationdata.txt'
+    if not os.path.isfile(filename): #download file into stationdata.txt
         response=requests.get('https://www1.ncdc.noaa.gov/pub/data/ghcn/daily/ghcnd-stations.txt') #stations in the network    
-        with open('filename', 'w') as file: #write stations to file for future reference
+        with open(filename, 'w') as file: #write stations to file for future reference
             file.write(response.text)
     #retrieve stations from file
     stations=np.genfromtxt(os.getcwd()+'/'+filename, delimiter=[11,9,10,7,3,31,4,4,6],
@@ -16,6 +18,8 @@ def get_stations(filename=None,city=None,state=None):
                                                 'gsn','hcn','wmo'],
                                          dtype=['U11','d','d','d','U3','U31','U4','U4','U6'],
                                          autostrip=True)
+    #note: genfromtxt allows entering the remote address of the file, but then it downloads the
+    #file into nested folders, which seems less than ideal for this project
     if city:
         if state:
             stations=stations[np.logical_and(np.char.find(stations['name'],city.upper())==0,stations['state']==state)]
@@ -28,7 +32,7 @@ def dly_to_df(filename):
     # and label the columns
     # note that each row contains an entire month (31 days, some data will be missing)
     colnames=['STATION','YEAR','MONTH','ELEMENT']
-    for i in range(1,32): #how to do this in a single list comprehension?
+    for i in range(1,32): #do this in a single list comprehension?
         colnames.extend([f'day{i}', f'm{i}', f'q{i}', f's{i}'])
     data = np.genfromtxt(filename,
                       delimiter=[11,4,2,4] + [5,1,1,1]*31,
@@ -79,11 +83,22 @@ def df_format_20(df):
     mask=list(pd.Series(cols).str.match('^(AW|WD|WS|TM|PR)[^B]\w{1}$')) #columns starting AW, WD, WS, TM, or PR, not followed by B,
     #4 characters only (so no flag columns)
     cols=[col for i,col in enumerate(cols) if mask[i]]
-
-    print('Fields available for analysis: ', cols)
+    print('Data columns loaded: ', cols)
+    if 'PRCP' not in cols:
+        raise KeyError
+    #to do: use alternative 'wind' columns if these ones are not available
+    if 'WSF2' not in cols:
+        raise KeyError
+    if 'WDF2' not in cols:
+        raise KeyError
+    
     #now restrict the columns to cols+identifying columns, and restrict the date range to the last couple years
     df=df[['STATION','DATE']+cols]
     df=df[df['DATE']>='2020-01-01']
+    if len(df)==0:
+        raise IndexError
+    if df['PRCP'].notna().sum()==0:
+        raise ValueError
 
     df.index=pd.DatetimeIndex(df.DATE)
     df=df.reindex(pd.date_range("2020-01-01", pd.to_datetime('today').date()))
@@ -120,7 +135,7 @@ def barplot_prcp(df,ax,year,threshr,threshw,direction,complement):
         dates=pd.date_range(num2date(xlims[0]).date(),num2date(xlims[1]).date()) 
     mask= (df.loc[dates]['WSF2']>=threshw) & (df.loc[dates]['PRCP']>=threshr)
     if complement:
-        mask=mask&((df.loc[dates]['WDF2']<=direction[0]) | (df.loc[dates]['WDF2']>=direction[1]))
+        mask=mask&((df.loc[dates]['WDF2']<direction[0]) | (df.loc[dates]['WDF2']>direction[1]))
     else:
         mask=mask&(df.loc[dates]['WDF2']>=direction[0]) & (df.loc[dates]['WDF2']<=direction[1])
     bars=ax.containers[0]
@@ -133,61 +148,67 @@ def barplot_prcp(df,ax,year,threshr,threshw,direction,complement):
 
 #create prcp plot
 def make_prcp_plot_20(df,title):
-    #check that it has the necessary fields, and dates from 2020-01-01
-    df=df_format_20(df)
-    
-    #initialize plot
-    fig,ax=make_labeled_date_plot(title)
-    
-    #do not plt.show() yet because it is empty and axis labels will be off
-    print('Creating plot ...')
+    try: #check that df has the necessary fields, and dates from 2020-01-01
+        df=df_format_20(df)
+    except KeyError:
+        print('Missing data column.')
+    except IndexError:
+        print('No data from the 2020s.')
+    except ValueError:
+        print('PRCP column has no values.')
+    else: #no exception raised
+        #initialize plot
+        fig,ax=make_labeled_date_plot(title)
+        
+        #do not plt.show() yet because it is empty and axis labels will be off
+        print('Creating plot ...')
 
-    #make room for the controls
-    fig.subplots_adjust(left=0.11, bottom=0.5)
+        #make room for the controls
+        fig.subplots_adjust(left=0.11, bottom=0.5)
 
-    #set y limits and labels
-    ax.set_ylim(bottom=0,top=max(df['PRCP']))
-    ax.set_ylabel('Precipitation [1/10 mm]')
+        #set y limits and labels
+        ax.set_ylim(bottom=0,top=max(df['PRCP']))
+        ax.set_ylabel('Precipitation [1/10 mm]')
 
-    #initial values and ranges for controls
-    dirmin_init=60
-    dirmax_init=140
-    rrange=[0,max(df['PRCP'])]
-    threshr_init=100
-    wrange=[0,400]
-    threshw_init=100
-    years=['2020','2021','2022','2023']
-    year_init=years[-1]
+        #initial values and ranges for controls
+        dirmin_init=60
+        dirmax_init=140
+        rrange=[0,max(df['PRCP'])]
+        threshr_init=100
+        wrange=[0,400]
+        threshw_init=100
+        years=['2020','2021','2022','2023']
+        year_init=years[-1]
 
-    #create new axes, radio buttons, sliders, and checkbox
-    #issues: label sliders with units; allow only integer steps
-    axr=fig.add_axes([0.04, 0.5, 0.01, 0.38])
-    r_slider=Slider(ax=axr,valinit=threshr_init,valmin=rrange[0],valmax=rrange[1],label='rain threshold',orientation='vertical')
-    axy=fig.add_axes([0.11, 0.1, 0.1, 0.15])
-    y_buttons=RadioButtons(ax=axy,labels=years, active=years.index(year_init))
-    axw=fig.add_axes([0.35, 0.2, 0.2, 0.04])
-    w_slider=Slider(ax=axw,valinit=threshw_init,valmin=wrange[0],valmax=wrange[1],label='wind threshold')
-    axd=fig.add_axes([0.35, 0.1, 0.2, 0.04])
-    d_slider=RangeSlider(ax=axd,valinit=[dirmin_init,dirmax_init],valmin=0,valmax=360,label='wind direction')
-    axc=fig.add_axes([0.63, 0.1, 0.27, 0.04])
-    c_box=CheckButtons(ax=axc,labels=['use complement of direction interval'])
+        #create new axes, radio buttons, sliders, and checkbox
+        #issues: label sliders with units
+        axr=fig.add_axes([0.04, 0.5, 0.01, 0.38])
+        r_slider=Slider(ax=axr,valinit=threshr_init,valmin=rrange[0],valmax=rrange[1],valstep=1,label='rain threshold',orientation='vertical')
+        axy=fig.add_axes([0.11, 0.1, 0.1, 0.15])
+        y_buttons=RadioButtons(ax=axy,labels=years, active=years.index(year_init))
+        axw=fig.add_axes([0.35, 0.2, 0.2, 0.04])
+        w_slider=Slider(ax=axw,valinit=threshw_init,valmin=wrange[0],valmax=wrange[1],valstep=1,label='wind threshold')
+        axd=fig.add_axes([0.35, 0.1, 0.2, 0.04])
+        d_slider=RangeSlider(ax=axd,valinit=[dirmin_init,dirmax_init],valmin=0,valmax=360,valstep=1,label='wind direction')
+        axc=fig.add_axes([0.63, 0.1, 0.27, 0.04])
+        c_box=CheckButtons(ax=axc,labels=['use complement of direction interval'])
 
-    #update function accepts exactly one (dummy) argument
-    def update(arg):
-        #vals of radio buttons, sliders and the status of the first (and only)
-        #checkbutton passed to the actual update function barplot_prcp()
-        barplot_prcp(df,ax,y_buttons.value_selected,r_slider.val,w_slider.val,d_slider.val,c_box.get_status()[0]) 
-        #one of the following is needed, otherwise the plot does not update correctly
-        #fig.canvas.draw()
-        fig.canvas.draw_idle() 
-    #register sliders and checkbox with the update function
-    y_buttons.on_clicked(update)
-    r_slider.on_changed(update)
-    w_slider.on_changed(update)
-    d_slider.on_changed(update)
-    c_box.on_clicked(update)
-    update(0) #for creating initial plot with default values before controls are changed
-    plt.show() #needed to show the actual plot in a window
+        #update function accepts exactly one (dummy) argument
+        def update(arg):
+            #vals of radio buttons, sliders and the status of the first (and only)
+            #checkbutton passed to the actual update function barplot_prcp()
+            barplot_prcp(df,ax,y_buttons.value_selected,r_slider.val,w_slider.val,d_slider.val,c_box.get_status()[0]) 
+            #one of the following is needed, otherwise the plot does not update correctly
+            #fig.canvas.draw()
+            fig.canvas.draw_idle() 
+        #register sliders and checkbox with the update function
+        y_buttons.on_clicked(update)
+        r_slider.on_changed(update)
+        w_slider.on_changed(update)
+        d_slider.on_changed(update)
+        c_box.on_clicked(update)
+        update(0) #for creating initial plot with default values before controls are changed
+        plt.show() #needed to show the actual plot in a window
 
 
 

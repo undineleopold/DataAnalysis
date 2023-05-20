@@ -11,18 +11,18 @@ while True: #main loop...
     state=input('State or Province (hit ENTER for default=MA): ')
     if city=='':
         city='Boston'
-        if state=='':
-            state='MA'
-    stations = w.get_stations('stationdata.txt',city,state)
+    if state=='':
+        state='MA' #so this does not allow searches for locations outside US/Canada
+                   #because the state will default to 'MA' if empty
+    stations = w.get_stations(city,state)
     n=len(stations)
     if n==0:
-        print('No stations found.')
+        print('No stations found for {city}, {state}.')
     else:
-        print(f'Stations found for {city},{state}: ')
+        print(f'Stations found for {city}, {state}: ')
         print('Option \t Station')
         for i,station in enumerate(stations):
             print(i+1,'\t',station)
-
         while True: #keep asking for input until a valid number or 'q' is entered
             selection=input(f'Select option from list above (1-{n}) or press \'q\'(quit): ')
             if selection=='q':

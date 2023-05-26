@@ -19,7 +19,7 @@ from IPython.display import display
 
 
 ```python
-stations = get_stations('stationdata.txt')
+stations = get_stations()
 ```
 
 
@@ -1357,43 +1357,43 @@ BostonLogan.tail() #there appears to be a several day lag in publishing the late
   </thead>
   <tbody>
     <tr>
-      <th>2023-05-05</th>
+      <th>2023-05-22</th>
       <td>USW00014739</td>
-      <td>2023-05-05</td>
-      <td>39</td>
-      <td>128</td>
-      <td>78</td>
+      <td>2023-05-22</td>
+      <td>52</td>
+      <td>178</td>
+      <td>100</td>
       <td>40</td>
-      <td>NaN</td>
-      <td>67</td>
-      <td>NaN</td>
+      <td>40</td>
+      <td>94</td>
+      <td>130</td>
     </tr>
     <tr>
-      <th>2023-05-06</th>
+      <th>2023-05-23</th>
       <td>USW00014739</td>
-      <td>2023-05-06</td>
-      <td>NaN</td>
-      <td>244</td>
-      <td>106</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>NaN</td>
+      <td>2023-05-23</td>
+      <td>41</td>
+      <td>150</td>
+      <td>94</td>
+      <td>100</td>
+      <td>100</td>
+      <td>94</td>
+      <td>103</td>
     </tr>
     <tr>
-      <th>2023-05-07</th>
+      <th>2023-05-24</th>
       <td>USW00014739</td>
-      <td>2023-05-07</td>
+      <td>2023-05-24</td>
       <td>NaN</td>
-      <td>NaN</td>
-      <td>NaN</td>
+      <td>233</td>
+      <td>89</td>
       <td>NaN</td>
       <td>NaN</td>
       <td>NaN</td>
       <td>NaN</td>
     </tr>
     <tr>
-      <th>2023-05-08</th>
+      <th>2023-05-25</th>
       <td>NaN</td>
       <td>NaT</td>
       <td>NaN</td>
@@ -1405,7 +1405,7 @@ BostonLogan.tail() #there appears to be a several day lag in publishing the late
       <td>NaN</td>
     </tr>
     <tr>
-      <th>2023-05-09</th>
+      <th>2023-05-26</th>
       <td>NaN</td>
       <td>NaT</td>
       <td>NaN</td>
@@ -1513,7 +1513,7 @@ BostonLogan.loc[days].loc[mask][['AWND','WSF2']]
 
 
 ```python
-#create plotting function..this can also be found in getweatherdata.py
+#create plotting function..this can also be found in weatherdata.py
 def make_labeled_plot(title):
     fig,ax=plt.subplots(figsize=(20,4.5))
     ax.set_title(title)
@@ -1523,7 +1523,7 @@ def make_labeled_plot(title):
 
 
 ```python
-#plot update function...adapt for other locations
+#plot update function...adapted for other locations in weatherdata.py
 def barplot_weather(ax,year,threshr,threshw,direction,complement):
     #check if any changes to the bar heights and xlim are necessary (i.e., check if xlim is already set/correct)
     if year!=str(num2date(ax.get_xlim()[0]).date().year):
@@ -1546,7 +1546,7 @@ def barplot_weather(ax,year,threshr,threshw,direction,complement):
         dates=pd.date_range(num2date(xlims[0]).date(),num2date(xlims[1]).date()) 
     mask= (BostonLogan.loc[dates]['WSF2']>=threshw) & (Watertown1.loc[dates]['PRCP']>=threshr)
     if complement:
-        mask=mask&((BostonLogan.loc[dates]['WDF2']<=direction[0]) | (BostonLogan.loc[dates]['WDF2']>=direction[1]))
+        mask=mask&((BostonLogan.loc[dates]['WDF2']<direction[0]) | (BostonLogan.loc[dates]['WDF2']>direction[1]))
     else:
         mask=mask&(BostonLogan.loc[dates]['WDF2']>=direction[0]) & (BostonLogan.loc[dates]['WDF2']<=direction[1])
     bars=ax.containers[0]
@@ -1586,13 +1586,13 @@ fig.subplots_adjust(left=0.1, bottom=0.5)
 
 #create new axes, radio buttons, sliders, and checkbox
 axr=fig.add_axes([0.04, 0.5, 0.01, 0.38])
-r_slider=Slider(ax=axr,valinit=threshr_init,valmin=rrange[0],valmax=rrange[1],label='rain threshold',orientation='vertical')
+r_slider=Slider(ax=axr,valinit=threshr_init,valmin=rrange[0],valmax=rrange[1],valstep=1,label='rain threshold',orientation='vertical')
 axy=fig.add_axes([0.11, 0.1, 0.1, 0.15])
 y_buttons=RadioButtons(ax=axy,labels=years, active=years.index(year_init))
 axw=fig.add_axes([0.35, 0.2, 0.2, 0.04])
-w_slider=Slider(ax=axw,valinit=threshw_init,valmin=wrange[0],valmax=wrange[1],label='wind threshold')
+w_slider=Slider(ax=axw,valinit=threshw_init,valmin=wrange[0],valmax=wrange[1],valstep=1,label='wind threshold')
 axd=fig.add_axes([0.35, 0.1, 0.2, 0.04])
-d_slider=RangeSlider(ax=axd,valinit=[dirmin_init,dirmax_init],valmin=0,valmax=360,label='wind direction')
+d_slider=RangeSlider(ax=axd,valinit=[dirmin_init,dirmax_init],valmin=0,valmax=360,valstep=1,label='wind direction')
 axc=fig.add_axes([0.63, 0.1, 0.27, 0.04])
 c_box=CheckButtons(ax=axc,labels=['use complement of direction interval'])
 

@@ -1,6 +1,6 @@
-# DataAnalysis
+# Weather Data Analysis
 
-The goal of this project is to build a tool for spotting weather patterns that trigger events such as basement flooding, sump pump activity, roof leaks, etc..
+The goal of this project is to build a tool for spotting and examining weather patterns that trigger events such as basement flooding, sump pump activity, roof leaks, etc..
 
 How to obtain past daily weather logs from the NOAA and format similar to their CDO (climate data online) service:
 
@@ -8,13 +8,19 @@ How to obtain past daily weather logs from the NOAA and format similar to their 
 
 Example: Analyzing combinations of Rain and Wind in Watertown, MA, thresholding with sliders:
 
-![example image with sliders](/RainAndWindMarkdown/output_38_0.png "example image with sliders")
+![example image with sliders](/MarkdownFiles/output_38_0.png "example image with sliders")
+
+A detailed breakdown of this example can be found in:
 
 [Rain and Wind analysis.ipynb](https://github.com/undineleopold/DataAnalysis/blob/main/Rain%20and%20Wind%20analysis.ipynb)
 
-Markdown version:
+Markdown versions of the notebooks:
 
-[Rain and Wind analysis.md](https://github.com/undineleopold/DataAnalysis/blob/main/RainAndWindMarkdown/Rain%20and%20Wind%20analysis.md)
+[NOAA Data Retrieval.md](https://github.com/undineleopold/DataAnalysis/blob/main/MarkdownFiles/NOAA%20Data%20Retrieval.md)
+
+[Rain and Wind analysis.md](https://github.com/undineleopold/DataAnalysis/blob/main/MarkdownFiles/Rain%20and%20Wind%20analysis.md)
+
+Some helpful functions are corralled in [weatherdata.py](https://github.com/undineleopold/DataAnalysis/blob/main/weatherdata.py). The code in [demo.py](https://github.com/undineleopold/DataAnalysis/blob/main/demo.py) makes use of these functions for selection and quick retrieval of data for a city (US/Canada only), generating the interactive plot of rain and wind data from the 2020s. 
 
 Demo:
 
